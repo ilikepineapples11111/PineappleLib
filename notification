@@ -1,0 +1,110 @@
+local TweenService = game:GetService("TweenService")
+local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- connnfig (do this first before pasting)
+local notificationWidth = 250 -- Width of the notification
+local notificationHeight = 100 -- Height of the notification
+local notificationSpacing = 10
+local notificationTransparency = 0.5  -- Transparency level for notification background
+local tweenDuration = 0.5
+
+-- table to keep track of notifications
+local notifications = {}
+
+-- fnction to create a notification
+local function createNotification(title, message)
+    -- Create the ScreenGui for the notification
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NotificationGui"
+    screenGui.Parent = playerGui
+
+    -- materialize the fricking frame for the notification
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, notificationWidth, 0, notificationHeight)
+    frame.Position = UDim2.new(0.5, -notificationWidth / 2, 0, (notificationHeight + notificationSpacing) * #notifications + 10) -- Centered at the top
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Dark gray color
+    frame.BorderSizePixel = 0
+    frame.BackgroundTransparency = 1 -- Start fully transparent
+    frame.Parent = screenGui
+
+    -- corner
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 8)
+    uiCorner.Parent = frame
+
+    -- TITLE
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 20) -- Title height
+    titleLabel.Position = UDim2.new(0, 0, 0, 0) -- Position at the top
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.Parent = frame
+
+    -- TEXT
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, -20) -- n word screaming break
+    textLabel.Position = UDim2.new(0, 0, 0, 20) -- align
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = message
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.SourceSans
+    textLabel.TextTransparency = 1 -- Start fully transparent
+    textLabel.Parent = frame
+
+    -- TWEEN
+    local tweenInfo = TweenInfo.new(tweenDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+    -- tween everything 
+    local fadeInTweenFrame = TweenService:Create(frame, tweenInfo, {BackgroundTransparency = notificationTransparency})
+    local fadeInTweenTitle = TweenService:Create(titleLabel, tweenInfo, {TextTransparency = 0})
+    local fadeInTweenText = TweenService:Create(textLabel, tweenInfo, {TextTransparency = 0})
+
+    -- fade-in
+    fadeInTweenFrame:Play()
+    fadeInTweenTitle:Play()
+    fadeInTweenText:Play()
+
+    -- WAIT! THEY DON'T LOVE YOU LIKE I DO!!!!
+    fadeInTweenFrame.Completed:Wait()
+
+    -- sore the notification 
+    table.insert(notifications, screenGui)
+
+    -- make the thing dissapear
+    wait(5)
+    local fadeOutTweenFrame = TweenService:Create(frame, tweenInfo, {BackgroundTransparency = 1})
+    local fadeOutTweenTitle = TweenService:Create(titleLabel, tweenInfo, {TextTransparency = 1})
+    local fadeOutTweenText = TweenService:Create(textLabel, tweenInfo, {TextTransparency = 1})
+
+    fadeOutTweenFrame:Play()
+    fadeOutTweenTitle:Play()
+    fadeOutTweenText:Play()
+
+    -- smooth positioning for remaining notifications
+    -- smooth positioning my ass
+    fadeOutTweenFrame.Completed:Connect(function()
+        screenGui:Destroy()
+        table.remove(notifications, table.find(notifications, screenGui))
+
+        
+        for i, gui in ipairs(notifications) do
+            local remainingFrame = gui:FindFirstChildOfClass("Frame")
+            if remainingFrame then
+                local targetPosition = UDim2.new(0.5, -notificationWidth / 2, 0, (notificationHeight + notificationSpacing) * (i - 1) + 10)
+                local moveTween = TweenService:Create(remainingFrame, tweenInfo, {Position = targetPosition})
+
+                moveTween:Play()
+                moveTween.Completed:Wait()
+            end
+        end
+    end)
+end
+
+-- mandatory n word screaming break
+
+-- example
+-- createNotification("Notification Title", "This is the first notification message!")
